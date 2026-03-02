@@ -28,6 +28,24 @@ env:
   FORCE_COLOR: 1
 
 jobs:
+  check-version-bump:
+    name: Check for Version Bump
+    runs-on: ubuntu-latest
+    outputs:
+      is_bump: ${{ steps.version.outputs.changed }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 2
+      - id: version
+        run: |
+          NEW=$(grep 'PY_VERSION ' Include/patchlevel.h | cut -d'"' -f2)
+          OLD=$(git show HEAD^1:Include/patchlevel.h | grep 'PY_VERSION ' | cut -d'"' -f2)
+          if [ "$NEW" != "$OLD" ]; then
+            echo "changed=true" >> $GITHUB_OUTPUT
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
   build-context:
     name: Change detection
     # To use boolean outputs from this job, parse them as JSON.
@@ -219,8 +237,9 @@ jobs:
       Ubuntu
       ${{ fromJSON(matrix.free-threading) && '(free-threading)' || '' }}
       ${{ fromJSON(matrix.bolt) && '(bolt)' || '' }}
-    needs: build-context
-    if: needs.build-context.outputs.run-ubuntu == 'true'
+    needs: [build-context, check-version-bump]
+    if: needs.build-context.outputs.run-ubuntu == 'true' &&
+      needs.check-version-bump.outputs.is_bump == 'true'
     strategy:
       fail-fast: false
       matrix:
