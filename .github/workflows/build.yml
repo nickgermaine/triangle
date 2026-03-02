@@ -68,7 +68,7 @@ jobs:
         with:
           tag_name: v${{ needs.extract-version.outputs.tri_version }}-${{ github.run_number }}
           name: Triangle v${{ needs.extract-version.outputs.tri_version }}
-          body: "Official Triangle Vibe Edition, built with triangles."
+          body: "Official Triangle Vibe Edition, built with triangles and vibes."
           files: |
             */triangle-linux.tar.gz
             */triangle-macos.tar.gz
