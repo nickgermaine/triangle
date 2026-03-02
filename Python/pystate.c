@@ -657,6 +657,8 @@ init_interpreter(PyInterpreterState *interp,
     _Py_stackref_associate(interp, Py_True, PyStackRef_True);
 #endif
 
+    interp->when_observers = NULL;
+
     interp->_initialized = 1;
     return _PyStatus_OK();
 }

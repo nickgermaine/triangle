@@ -1033,10 +1033,93 @@ done:
 
 */
 
-/* Map rich comparison operators to their swapped version, e.g. LT <--> GT */
-int _Py_SwappedOp[] = {Py_GT, Py_GE, Py_EQ, Py_NE, Py_LT, Py_LE};
 
-static const char * const opstrings[] = {"<", "<=", "==", "!=", ">", ">="};
+static int
+_PyObject_Kinda(PyObject *v, PyObject *w)
+{
+    // Similarity in numbers
+    if (PyNumber_Check(v) && PyNumber_Check(w)) {
+        double dv = PyFloat_AsDouble(v);
+        double dw = PyFloat_AsDouble(w);
+        if (PyErr_Occurred()) { PyErr_Clear(); return 0; }
+
+        if (dv == dw) return 1;
+
+        double diff = fabs(dv - dw);
+        double max_val = fmax(fabs(dv), fabs(dw));
+        if (max_val == 0) return 1;
+
+        return (diff / max_val <= 0.1);
+    }
+
+    // Fuzzy stringz
+    if (PyUnicode_Check(v) && PyUnicode_Check(w)) {
+        Py_ssize_t len_v = PyUnicode_GET_LENGTH(v);
+        Py_ssize_t len_w = PyUnicode_GET_LENGTH(w);
+        if (len_v == 0 && len_w == 0) return 1;
+
+        double ratio = (double)Py_MIN(len_v, len_w) / (double)Py_MAX(len_v, len_w);
+        if (ratio < 0.8) return 0;
+
+        Py_ssize_t min_len = Py_MIN(len_v, len_w);
+        Py_ssize_t matches = 0;
+
+        for (Py_ssize_t i = 0; i < min_len; i++) {
+            if (PyUnicode_READ_CHAR(v, i) == PyUnicode_READ_CHAR(w, i)) {
+                matches++;
+            }
+        }
+
+        double match_ratio = (double)matches / (double)Py_MAX(len_v, len_w);
+        return (match_ratio >= 0.75); // 75% character match = "kinda" the same
+    }
+
+    if (PyList_Check(v) && PyList_Check(w)) {
+        Py_ssize_t len_v = PyList_GET_SIZE(v);
+        Py_ssize_t len_w = PyList_GET_SIZE(w);
+        if (len_v == 0 && len_w == 0) return 1;
+
+        double len_ratio = (double)Py_MIN(len_v, len_w) / (double)Py_MAX(len_v, len_w);
+        if (len_ratio < 0.8) return 0;
+
+        Py_ssize_t matches = 0;
+        Py_ssize_t min_len = Py_MIN(len_v, len_w);
+        for (Py_ssize_t i = 0; i < min_len; i++) {
+            if (_PyObject_Kinda(PyList_GET_ITEM(v, i), PyList_GET_ITEM(w, i)) == 1) {
+                matches++;
+            }
+        }
+        return ((double)matches / (double)Py_MAX(len_v, len_w) >= 0.75);
+    }
+
+    if (PyDict_Check(v) && PyDict_Check(w)) {
+        Py_ssize_t size_v = PyDict_GET_SIZE(v);
+        Py_ssize_t size_w = PyDict_GET_SIZE(w);
+        if (size_v == 0 && size_w == 0) return 1;
+
+        Py_ssize_t matches = 0;
+        PyObject *key, *value_v;
+        Py_ssize_t pos = 0;
+
+        while (PyDict_Next(v, &pos, &key, &value_v)) {
+            PyObject *value_w = PyDict_GetItemWithError(w, key);
+            if (value_w && _PyObject_Kinda(value_v, value_w) == 1) {
+                matches++;
+            }
+        }
+
+        // Score based on the larger dictionary
+        return ((double)matches / (double)Py_MAX(size_v, size_w) >= 0.75);
+    }
+
+    return 0;
+}
+
+
+/* Map rich comparison operators to their swapped version, e.g. LT <--> GT */
+int _Py_SwappedOp[] = {Py_GT, Py_GE, Py_EQ, Py_NE, Py_LT, Py_LE, Py_Kinda};
+
+static const char * const opstrings[] = {"<", "<=", "==", "!=", ">", ">=", "is kinda"};
 
 /* Perform a rich comparison, raising TypeError when the requested comparison
    operator is not supported. */
@@ -1077,6 +1160,9 @@ do_richcompare(PyThreadState *tstate, PyObject *v, PyObject *w, int op)
     case Py_NE:
         res = (v != w) ? Py_True : Py_False;
         break;
+    case Py_Kinda:
+        res = _PyObject_Kinda(v, w) ? Py_True : Py_False;
+        break;
     default:
         _PyErr_Format(tstate, PyExc_TypeError,
                       "'%s' not supported between instances of '%.100s' and '%.100s'",
@@ -1096,7 +1182,7 @@ PyObject_RichCompare(PyObject *v, PyObject *w, int op)
 {
     PyThreadState *tstate = _PyThreadState_GET();
 
-    assert(Py_LT <= op && op <= Py_GE);
+    assert(Py_LT <= op && op <= Py_Kinda);
     if (v == NULL || w == NULL) {
         if (!_PyErr_Occurred(tstate)) {
             PyErr_BadInternalCall();

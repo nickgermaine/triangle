@@ -217,6 +217,7 @@ const uint32_t _PyUop_Flags[MAX_UOP_ID+1] = {
     [_CHECK_EXC_MATCH] = HAS_ERROR_FLAG | HAS_ERROR_NO_POP_FLAG | HAS_ESCAPES_FLAG,
     [_IMPORT_NAME] = HAS_ARG_FLAG | HAS_NAME_FLAG | HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
     [_IMPORT_FROM] = HAS_ARG_FLAG | HAS_NAME_FLAG | HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
+    [_REGISTER_WHEN] = HAS_ESCAPES_FLAG,
     [_IS_NONE] = HAS_ESCAPES_FLAG,
     [_GET_LEN] = HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
     [_MATCH_CLASS] = HAS_ARG_FLAG | HAS_ERROR_FLAG | HAS_ESCAPES_FLAG,
@@ -2034,6 +2035,15 @@ const _PyUopCachingInfo _PyUop_Caching[MAX_UOP_ID+1] = {
             { -1, -1, -1 },
             { 2, 1, _IMPORT_FROM_r12 },
             { -1, -1, -1 },
+            { -1, -1, -1 },
+        },
+    },
+    [_REGISTER_WHEN] = {
+        .best = { 2, 2, 2, 2 },
+        .entries = {
+            { -1, -1, -1 },
+            { -1, -1, -1 },
+            { 0, 2, _REGISTER_WHEN_r20 },
             { -1, -1, -1 },
         },
     },
@@ -3869,6 +3879,7 @@ const uint16_t _PyUop_Uncached[MAX_UOP_REGS_ID+1] = {
     [_CHECK_EXC_MATCH_r22] = _CHECK_EXC_MATCH,
     [_IMPORT_NAME_r21] = _IMPORT_NAME,
     [_IMPORT_FROM_r12] = _IMPORT_FROM,
+    [_REGISTER_WHEN_r20] = _REGISTER_WHEN,
     [_IS_NONE_r11] = _IS_NONE,
     [_GET_LEN_r12] = _GET_LEN,
     [_MATCH_CLASS_r31] = _MATCH_CLASS,
@@ -5223,6 +5234,8 @@ const char *const _PyOpcode_uop_name[MAX_UOP_REGS_ID+1] = {
     [_RECORD_NOS_GEN_FUNC] = "_RECORD_NOS_GEN_FUNC",
     [_RECORD_TOS] = "_RECORD_TOS",
     [_RECORD_TOS_TYPE] = "_RECORD_TOS_TYPE",
+    [_REGISTER_WHEN] = "_REGISTER_WHEN",
+    [_REGISTER_WHEN_r20] = "_REGISTER_WHEN_r20",
     [_REPLACE_WITH_TRUE] = "_REPLACE_WITH_TRUE",
     [_REPLACE_WITH_TRUE_r02] = "_REPLACE_WITH_TRUE_r02",
     [_REPLACE_WITH_TRUE_r12] = "_REPLACE_WITH_TRUE_r12",
@@ -5783,6 +5796,8 @@ int _PyUop_num_popped(int opcode, int oparg)
             return 2;
         case _IMPORT_FROM:
             return 0;
+        case _REGISTER_WHEN:
+            return 2;
         case _IS_NONE:
             return 1;
         case _GET_LEN:

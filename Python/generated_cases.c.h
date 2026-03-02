@@ -4795,7 +4795,7 @@
             {
                 PyObject *left_o = PyStackRef_AsPyObjectBorrow(left);
                 PyObject *right_o = PyStackRef_AsPyObjectBorrow(right);
-                assert((oparg >> 5) <= Py_GE);
+                assert((oparg >> 5) <= Py_Kinda);
                 _PyFrame_SetStackPointer(frame, stack_pointer);
                 PyObject *res_o = PyObject_RichCompare(left_o, right_o, oparg >> 5);
                 _PyStackRef tmp = right;
@@ -10339,6 +10339,40 @@
                 JUMP_TO_LABEL(exception_unwind);
             }
             JUMP_TO_LABEL(error);
+        }
+
+        TARGET(REGISTER_WHEN) {
+            #if _Py_TAIL_CALL_INTERP
+            int opcode = REGISTER_WHEN;
+            (void)(opcode);
+            #endif
+            frame->instr_ptr = next_instr;
+            next_instr += 1;
+            INSTRUCTION_STATS(REGISTER_WHEN);
+            _PyStackRef condition;
+            _PyStackRef body;
+            body = stack_pointer[-1];
+            condition = stack_pointer[-2];
+            PyObject *cond_o = PyStackRef_AsPyObjectBorrow(condition);
+            PyObject *body_o = PyStackRef_AsPyObjectBorrow(body);
+            _PyFrame_SetStackPointer(frame, stack_pointer);
+            int err = _PyEval_AddReactiveObserver(tstate, cond_o, body_o);
+            _PyStackRef tmp = body;
+            body = PyStackRef_NULL;
+            stack_pointer[-1] = body;
+            PyStackRef_CLOSE(tmp);
+            tmp = condition;
+            condition = PyStackRef_NULL;
+            stack_pointer[-2] = condition;
+            PyStackRef_CLOSE(tmp);
+            stack_pointer = _PyFrame_GetStackPointer(frame);
+            stack_pointer += -2;
+            ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            if (err < 0) {
+                JUMP_TO_LABEL(error);
+            }
+            _Py_set_eval_breaker_bit(tstate, _PY_CALLS_TO_DO_BIT);
+            DISPATCH();
         }
 
         TARGET(RERAISE) {

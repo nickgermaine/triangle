@@ -1432,6 +1432,60 @@ _Py_HandlePending(PyThreadState *tstate)
         }
     }
 
+    if (tstate->interp->when_observers != NULL && PyList_Size(tstate->interp->when_observers) > 0) {
+        if (tstate->interp->_finalizing) {
+            return 0;
+        }
+
+        PyObject *observers = tstate->interp->when_observers;
+        PyObject *main_exc = PyErr_GetRaisedException();
+
+        for (Py_ssize_t i = PyList_Size(observers) - 1; i >= 0; i--) {
+            PyObject *pair = PyList_GetItem(observers, i);
+            PyObject *cond_code = PyTuple_GetItem(pair, 0);
+            PyObject *body_code = PyTuple_GetItem(pair, 1);
+
+            _PyInterpreterFrame *current_f = tstate->current_frame;
+            PyObject *globals = NULL;
+            PyObject *locals = NULL;
+
+            if (current_f != NULL) {
+                globals = current_f->f_globals;
+                locals = current_f->f_locals;
+            } else {
+                globals = tstate->interp->builtins;
+                locals = NULL;
+            }
+
+            PyObject *res = PyEval_EvalCode(cond_code, globals, locals ? locals : globals);
+
+            if (res == NULL) {
+                PyErr_Clear();
+                continue;
+            }
+
+            int is_true = PyObject_IsTrue(res);
+            Py_DECREF(res);
+
+            if (is_true) {
+                Py_INCREF(body_code);
+                PySequence_DelItem(observers, i);
+
+                PyObject *body_res = PyEval_EvalCode(body_code, globals, locals ? locals : globals);
+                if (body_res == NULL) {
+                    PyObject *tmp = PyErr_GetRaisedException();
+                    Py_XDECREF(tmp);
+                } else {
+                    Py_DECREF(body_res);
+                }
+
+                PyErr_Clear();
+                Py_DECREF(body_code);
+            }
+        }
+        PyErr_SetRaisedException(main_exc);
+    }
+
 #if defined(Py_REMOTE_DEBUG) && defined(Py_SUPPORTS_REMOTE_DEBUG)
     _PyRunRemoteDebugger(tstate);
 #endif

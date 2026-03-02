@@ -317,6 +317,9 @@ meth_repr(PyObject *self)
 static PyObject *
 meth_richcompare(PyObject *self, PyObject *other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyCFunctionObject *a, *b;
     PyObject *res;
     int eq;

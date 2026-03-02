@@ -705,6 +705,9 @@ generic_getattr:
 static PyObject *
 ga_richcompare(PyObject *a, PyObject *b, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     if (!_PyGenericAlias_Check(b) ||
         (op != Py_EQ && op != Py_NE))
     {

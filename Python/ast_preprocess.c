@@ -769,6 +769,11 @@ astfold_stmt(stmt_ty node_, PyArena *ctx_, _PyASTPreprocessState *state)
         CALL_SEQ(astfold_stmt, stmt, node_->v.While.orelse);
         break;
     }
+    case When_kind: {
+        CALL(astfold_expr, expr_ty, node_->v.When.test);
+        CALL_SEQ(astfold_stmt, stmt, node_->v.When.body);
+        break;
+    }
     case If_kind:
         CALL(astfold_expr, expr_ty, node_->v.If.test);
         CALL_SEQ(astfold_stmt, stmt, node_->v.If.body);

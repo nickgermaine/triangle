@@ -9,6 +9,34 @@ Py_GetRecursionLimit(void)
     return interp->ceval.recursion_limit;
 }
 
+PyAPI_FUNC(int)
+_PyEval_AddReactiveObserver(PyThreadState *tstate, PyObject *cond, PyObject *body)
+{
+    PyInterpreterState *interp = tstate->interp;
+
+    if (interp->when_observers == NULL) {
+        interp->when_observers = PyList_New(0);
+        if (interp->when_observers == NULL) {
+            return -1;
+        }
+    }
+
+    PyObject *pair = PyTuple_Pack(2, cond, body);
+    if (pair == NULL) {
+        return -1;
+    }
+
+    if (PyList_Append(interp->when_observers, pair) < 0) {
+        Py_DECREF(pair);
+        return -1;
+    }
+    Py_DECREF(pair);
+
+    _Py_set_eval_breaker_bit(tstate, _PY_CALLS_TO_DO_BIT);
+
+    return 0;
+}
+
 void
 Py_SetRecursionLimit(int new_limit)
 {

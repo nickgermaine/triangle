@@ -2099,7 +2099,7 @@
                 /* Start of uop copied from bytecodes for constant evaluation */
                 PyObject *left_o = PyStackRef_AsPyObjectBorrow(left);
                 PyObject *right_o = PyStackRef_AsPyObjectBorrow(right);
-                assert((oparg >> 5) <= Py_GE);
+                assert((oparg >> 5) <= Py_Kinda);
                 PyObject *res_o = PyObject_RichCompare(left_o, right_o, oparg >> 5);
                 if (res_o == NULL) {
                     goto error;
@@ -2511,6 +2511,13 @@
             CHECK_STACK_BOUNDS(1);
             stack_pointer[0] = res;
             stack_pointer += 1;
+            ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            break;
+        }
+
+        case _REGISTER_WHEN: {
+            CHECK_STACK_BOUNDS(-2);
+            stack_pointer += -2;
             ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
             break;
         }

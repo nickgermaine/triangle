@@ -34,6 +34,7 @@ module Python
           | For(expr target, expr iter, stmt* body, stmt* orelse, string? type_comment)
           | AsyncFor(expr target, expr iter, stmt* body, stmt* orelse, string? type_comment)
           | While(expr test, stmt* body, stmt* orelse)
+          | When(expr test, stmt* body, int is_persistent)
           | If(expr test, stmt* body, stmt* orelse)
           | With(withitem* items, stmt* body, string? type_comment)
           | AsyncWith(withitem* items, stmt* body, string? type_comment)
@@ -106,7 +107,7 @@ module Python
 
     unaryop = Invert | Not | UAdd | USub
 
-    cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn
+    cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn | Kinda
 
     comprehension = (expr target, expr iter, expr* ifs, int is_async)
 

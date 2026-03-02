@@ -2089,6 +2089,44 @@ symtable_visit_stmt(struct symtable *st, stmt_ty s)
         LEAVE_CONDITIONAL_BLOCK(st);
         break;
     }
+    case When_kind: {
+        PyObject *test_name = PyUnicode_FromString("<when_test>");
+        if (!test_name) return 0;
+
+        _Py_SourceLocation test_loc = {
+            .lineno = s->v.When.test->lineno,
+            .col_offset = s->v.When.test->col_offset,
+            .end_lineno = s->v.When.test->end_lineno,
+            .end_col_offset = s->v.When.test->end_col_offset
+        };
+
+        if (!symtable_enter_block(st, test_name, ModuleBlock, (void *)s->v.When.test, test_loc)) {
+            Py_DECREF(test_name); return 0;
+        }
+        Py_DECREF(test_name);
+
+        VISIT(st, expr, s->v.When.test);
+        if (!symtable_exit_block(st)) return 0;
+
+        PyObject *body_name = PyUnicode_FromString("<when_body>");
+        if (!body_name) return 0;
+
+        _Py_SourceLocation body_loc = {
+            .lineno = s->lineno,
+            .col_offset = s->col_offset,
+            .end_lineno = s->end_lineno,
+            .end_col_offset = s->end_col_offset
+        };
+
+        if (!symtable_enter_block(st, body_name, FunctionBlock, (void *)s->v.When.body, body_loc)) {
+            Py_DECREF(body_name); return 0;
+        }
+        Py_DECREF(body_name);
+        VISIT_SEQ(st, stmt, s->v.When.body);
+        if (!symtable_exit_block(st)) return 0;
+
+        break;
+    }
     case If_kind: {
         /* XXX if 0: and lookup_yield() hacks */
         VISIT(st, expr, s->v.If.test);

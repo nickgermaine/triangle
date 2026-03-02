@@ -578,6 +578,11 @@ _PyRun_SimpleStringFlagsWithName(const char *command, const char* name, PyCompil
         return -1;
     }
 
+    PyThreadState *tstate = _PyThreadState_GET();
+    if (tstate->interp->when_observers != NULL && PyList_Size(tstate->interp->when_observers) > 0) {
+        _Py_set_eval_breaker_bit(tstate, _PY_CALLS_TO_DO_BIT);
+        _Py_HandlePending(tstate);
+    }
     Py_DECREF(res);
     return 0;
 }

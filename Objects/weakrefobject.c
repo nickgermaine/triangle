@@ -244,6 +244,9 @@ weakref_repr(PyObject *self)
 static PyObject *
 weakref_richcompare(PyObject* self, PyObject* other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     if ((op != Py_EQ && op != Py_NE) ||
         !PyWeakref_Check(self) ||
         !PyWeakref_Check(other)) {
@@ -635,6 +638,9 @@ proxy_setattr(PyObject *proxy, PyObject *name, PyObject *value)
 static PyObject *
 proxy_richcompare(PyObject *proxy, PyObject *v, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     UNWRAP(proxy);
     UNWRAP(v);
     PyObject* res = PyObject_RichCompare(proxy, v, op);

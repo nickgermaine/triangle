@@ -28,6 +28,7 @@ extern int _PyEval_SetTrace(PyThreadState *tstate, Py_tracefunc func, PyObject *
 extern int _PyEval_SetTraceAllThreads(PyInterpreterState *interp, Py_tracefunc func, PyObject *arg);
 
 extern int _PyEval_SetOpcodeTrace(PyFrameObject *f, bool enable);
+PyAPI_FUNC(int) _PyEval_AddReactiveObserver(PyThreadState *tstate, PyObject *cond, PyObject *body);
 
 // Helper to look up a builtin object
 // Export for 'array' shared extension

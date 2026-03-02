@@ -142,6 +142,7 @@ compound_stmt[stmt_ty]:
     | &('for' | 'async') for_stmt
     | &'try' try_stmt
     | &'while' while_stmt
+    | when_stmt
     | match_stmt
 
 # SIMPLE STATEMENTS
@@ -402,6 +403,17 @@ else_block[asdl_stmt_seq*]:
 while_stmt[stmt_ty]:
     | invalid_while_stmt
     | 'while' a=named_expression ':' b=block c=[else_block] { _PyAST_While(a, b, c, EXTRA) }
+
+# When statement
+# --------------
+
+when_stmt[stmt_ty]:
+    | invalid_when_stmt
+    | "when" a=named_expression ':' b=block { _PyAST_When(a, b, 0, EXTRA) }
+
+invalid_when_stmt:
+    | "when" a=named_expression ':' { _PyPegen_raise_error(p, PyExc_SyntaxError, 1, "Triangle Reactive Error: Missing block") }
+    | "when" a=named_expression { _PyPegen_raise_error(p, PyExc_SyntaxError, 1, "Triangle Reactive Error: Missing colon") }
 
 # For statement
 # -------------
@@ -797,6 +809,7 @@ compare_op_bitwise_or_pair[CmpopExprPair*]:
     | notin_bitwise_or
     | in_bitwise_or
     | isnot_bitwise_or
+    | iskinda_bitwise_or
     | is_bitwise_or
 
 eq_bitwise_or[CmpopExprPair*]: '==' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, Eq, a) }
@@ -809,6 +822,7 @@ gt_bitwise_or[CmpopExprPair*]: '>' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, Gt
 notin_bitwise_or[CmpopExprPair*]: 'not' 'in' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, NotIn, a) }
 in_bitwise_or[CmpopExprPair*]: 'in' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, In, a) }
 isnot_bitwise_or[CmpopExprPair*]: 'is' 'not' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, IsNot, a) }
+iskinda_bitwise_or[CmpopExprPair*]: 'is' "kinda" a=bitwise_or { _PyPegen_cmpop_expr_pair(p, Kinda, a) }
 is_bitwise_or[CmpopExprPair*]: 'is' a=bitwise_or { _PyPegen_cmpop_expr_pair(p, Is, a) }
 
 # Bitwise operators

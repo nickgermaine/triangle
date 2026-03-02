@@ -28,24 +28,24 @@ class Timeout:
     Use `timeout()` or `timeout_at()` rather than instantiating this class directly.
     """
 
-    def __init__(self, when: float | None) -> None:
+    def __init__(self, when_time: float | None) -> None:
         """Schedule a timeout that will trigger at a given loop time.
 
-        - If `when` is `None`, the timeout will never trigger.
-        - If `when < loop.time()`, the timeout will trigger on the next
+        - If `when_time` is `None`, the timeout will never trigger.
+        - If `when_time < loop.time()`, the timeout will trigger on the next
           iteration of the event loop.
         """
         self._state = _State.CREATED
 
         self._timeout_handler: events.TimerHandle | None = None
         self._task: tasks.Task | None = None
-        self._when = when
+        self._when_time = when_time
 
-    def when(self) -> float | None:
+    def when_time(self) -> float | None:
         """Return the current deadline."""
-        return self._when
+        return self._when_time
 
-    def reschedule(self, when: float | None) -> None:
+    def reschedule(self, when_time: float | None) -> None:
         """Reschedule the timeout."""
         if self._state is not _State.ENTERED:
             if self._state is _State.CREATED:
@@ -54,19 +54,19 @@ class Timeout:
                 f"Cannot change state of {self._state.value} Timeout",
             )
 
-        self._when = when
+        self._when_time = when_time
 
         if self._timeout_handler is not None:
             self._timeout_handler.cancel()
 
-        if when is None:
+        if when_time is None:
             self._timeout_handler = None
         else:
             loop = events.get_running_loop()
-            if when <= loop.time():
+            if when_time <= loop.time():
                 self._timeout_handler = loop.call_soon(self._on_timeout)
             else:
-                self._timeout_handler = loop.call_at(when, self._on_timeout)
+                self._timeout_handler = loop.call_at(when_time, self._on_timeout)
 
     def expired(self) -> bool:
         """Is timeout expired during execution?"""
@@ -75,8 +75,8 @@ class Timeout:
     def __repr__(self) -> str:
         info = ['']
         if self._state is _State.ENTERED:
-            when = round(self._when, 3) if self._when is not None else None
-            info.append(f"when={when}")
+            when_time = round(self._when_time, 3) if self._when_time is not None else None
+            info.append(f"when_time={when_time}")
         info_str = ' '.join(info)
         return f"<Timeout [{self._state.value}]{info_str}>"
 
@@ -89,7 +89,7 @@ class Timeout:
         self._state = _State.ENTERED
         self._task = task
         self._cancelling = self._task.cancelling()
-        self.reschedule(self._when)
+        self.reschedule(self._when_time)
         return self
 
     async def __aexit__(
@@ -160,7 +160,7 @@ def timeout(delay: float | None) -> Timeout:
     return Timeout(loop.time() + delay if delay is not None else None)
 
 
-def timeout_at(when: float | None) -> Timeout:
+def timeout_at(when_time: float | None) -> Timeout:
     """Schedule the timeout at absolute time.
 
     Like timeout() but argument gives absolute time in the same clock system
@@ -173,10 +173,10 @@ def timeout_at(when: float | None) -> Timeout:
     ...     await long_running_task()
 
 
-    when - a deadline when timeout occurs or None to disable timeout logic
+    when_time - a deadline when_time timeout occurs or None to disable timeout logic
 
     long_running_task() is interrupted by raising asyncio.CancelledError,
     the top-most affected timeout() context manager converts CancelledError
     into TimeoutError.
     """
-    return Timeout(when)
+    return Timeout(when_time)

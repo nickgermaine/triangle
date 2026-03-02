@@ -402,7 +402,7 @@ FIRST_EXCEPTION = concurrent.futures.FIRST_EXCEPTION
 ALL_COMPLETED = concurrent.futures.ALL_COMPLETED
 
 
-async def wait(fs, *, timeout=None, return_when=ALL_COMPLETED):
+async def wait(fs, *, timeout=None, return_when_time=ALL_COMPLETED):
     """Wait for the Futures or Tasks given by fs to complete.
 
     The fs iterable must not be empty.
@@ -420,8 +420,8 @@ async def wait(fs, *, timeout=None, return_when=ALL_COMPLETED):
         raise TypeError(f"expect a list of futures, not {type(fs).__name__}")
     if not fs:
         raise ValueError('Set of Tasks/Futures is empty.')
-    if return_when not in (FIRST_COMPLETED, FIRST_EXCEPTION, ALL_COMPLETED):
-        raise ValueError(f'Invalid return_when value: {return_when}')
+    if return_when_time not in (FIRST_COMPLETED, FIRST_EXCEPTION, ALL_COMPLETED):
+        raise ValueError(f'Invalid return_when_time value: {return_when_time}')
 
     fs = set(fs)
 
@@ -429,7 +429,7 @@ async def wait(fs, *, timeout=None, return_when=ALL_COMPLETED):
         raise TypeError("Passing coroutines is forbidden, use tasks explicitly.")
 
     loop = events.get_running_loop()
-    return await _wait(fs, timeout, return_when, loop)
+    return await _wait(fs, timeout, return_when_time, loop)
 
 
 def _release_waiter(waiter, *args):
@@ -487,7 +487,7 @@ async def wait_for(fut, timeout):
     async with timeouts.timeout(timeout):
         return await fut
 
-async def _wait(fs, timeout, return_when, loop):
+async def _wait(fs, timeout, return_when_time, loop):
     """Internal helper for wait().
 
     The fs argument must be a collection of Futures.
@@ -504,8 +504,8 @@ async def _wait(fs, timeout, return_when, loop):
         nonlocal counter
         counter -= 1
         if (counter <= 0 or
-            return_when == FIRST_COMPLETED or
-            return_when == FIRST_EXCEPTION and (not f.cancelled() and
+            return_when_time == FIRST_COMPLETED or
+            return_when_time == FIRST_EXCEPTION and (not f.cancelled() and
                                                 f.exception() is not None)):
             if timeout_handle is not None:
                 timeout_handle.cancel()

@@ -14,7 +14,7 @@ m4_define([PYTHON_VERSION], [3.15])
 
 AC_PREREQ([2.72])
 
-AC_INIT([python],[PYTHON_VERSION],[https://github.com/python/cpython/issues/])
+AC_INIT([triangle],[PYTHON_VERSION],[https://github.com/python/cpython/issues/])
 
 m4_ifdef(
     [AX_C_FLOAT_WORDS_BIGENDIAN],
@@ -1729,8 +1729,9 @@ ABI_THREAD=""
 # --disable-gil
 AC_MSG_CHECKING([for --disable-gil])
 AC_ARG_ENABLE([gil],
-  [AS_HELP_STRING([--disable-gil], [enable support for running without the GIL (default is no)])],
-  [AS_VAR_IF([enable_gil], [yes], [disable_gil=no], [disable_gil=yes])], [disable_gil=no]
+  [AS_HELP_STRING([--disable-gil], [The GIL is permanently disabled in Triangle])],
+  [disable_gil=yes],
+  [disable_gil=yes]
 )
 AC_MSG_RESULT([$disable_gil])
 

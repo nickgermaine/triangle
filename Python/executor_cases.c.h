@@ -10025,7 +10025,7 @@
             left = _stack_item_0;
             PyObject *left_o = PyStackRef_AsPyObjectBorrow(left);
             PyObject *right_o = PyStackRef_AsPyObjectBorrow(right);
-            assert((oparg >> 5) <= Py_GE);
+            assert((oparg >> 5) <= Py_Kinda);
             stack_pointer[0] = left;
             stack_pointer[1] = right;
             stack_pointer += 2;
@@ -10730,6 +10730,46 @@
             SET_CURRENT_CACHED_VALUES(2);
             stack_pointer += -1;
             ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            assert(WITHIN_STACK_BOUNDS_IGNORING_CACHE());
+            break;
+        }
+
+        case _REGISTER_WHEN_r20: {
+            CHECK_CURRENT_CACHED_VALUES(2);
+            assert(WITHIN_STACK_BOUNDS_IGNORING_CACHE());
+            _PyStackRef body;
+            _PyStackRef condition;
+            _PyStackRef _stack_item_0 = _tos_cache0;
+            _PyStackRef _stack_item_1 = _tos_cache1;
+            body = _stack_item_1;
+            condition = _stack_item_0;
+            PyObject *cond_o = PyStackRef_AsPyObjectBorrow(condition);
+            PyObject *body_o = PyStackRef_AsPyObjectBorrow(body);
+            stack_pointer[0] = condition;
+            stack_pointer[1] = body;
+            stack_pointer += 2;
+            ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            _PyFrame_SetStackPointer(frame, stack_pointer);
+            int err = _PyEval_AddReactiveObserver(tstate, cond_o, body_o);
+            _PyStackRef tmp = body;
+            body = PyStackRef_NULL;
+            stack_pointer[-1] = body;
+            PyStackRef_CLOSE(tmp);
+            tmp = condition;
+            condition = PyStackRef_NULL;
+            stack_pointer[-2] = condition;
+            PyStackRef_CLOSE(tmp);
+            stack_pointer = _PyFrame_GetStackPointer(frame);
+            stack_pointer += -2;
+            ASSERT_WITHIN_STACK_BOUNDS(__FILE__, __LINE__);
+            if (err < 0) {
+                JUMP_TO_LABEL(error);
+            }
+            _Py_set_eval_breaker_bit(tstate, _PY_CALLS_TO_DO_BIT);
+            _tos_cache0 = PyStackRef_ZERO_BITS;
+            _tos_cache1 = PyStackRef_ZERO_BITS;
+            _tos_cache2 = PyStackRef_ZERO_BITS;
+            SET_CURRENT_CACHED_VALUES(0);
             assert(WITHIN_STACK_BOUNDS_IGNORING_CACHE());
             break;
         }

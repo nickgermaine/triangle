@@ -3613,6 +3613,10 @@ long_compare(PyLongObject *a, PyLongObject *b)
 static PyObject *
 long_richcompare(PyObject *self, PyObject *other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
+
     Py_ssize_t result;
     CHECK_BINOP(self, other);
     if (self == other)

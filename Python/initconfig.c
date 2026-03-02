@@ -3109,7 +3109,7 @@ config_parse_cmdline(PyConfig *config, PyWideStringList *warnoptions,
     } while (1);
 
     if (print_version) {
-        printf("Python %s\n",
+        printf("Triangle %s\n",
                 (print_version >= 2) ? Py_GetVersion() : PY_VERSION);
         return _PyStatus_EXIT(0);
     }

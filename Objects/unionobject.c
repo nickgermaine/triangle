@@ -112,6 +112,9 @@ unions_equal(unionobject *a, unionobject *b)
 static PyObject *
 union_richcompare(PyObject *a, PyObject *b, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     if (!_PyUnion_Check(b) || (op != Py_EQ && op != Py_NE)) {
         Py_RETURN_NOTIMPLEMENTED;
     }

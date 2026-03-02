@@ -577,6 +577,9 @@ static PyMethodDef slice_methods[] = {
 static PyObject *
 slice_richcompare(PyObject *v, PyObject *w, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     if (!PySlice_Check(v) || !PySlice_Check(w))
         Py_RETURN_NOTIMPLEMENTED;
 

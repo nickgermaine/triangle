@@ -805,6 +805,7 @@ struct _is {
     struct _ceval_state ceval;
 
     PyInterpreterState *next;
+    PyObject *when_observers;
 
     int64_t id;
     Py_ssize_t id_refcount;

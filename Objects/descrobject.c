@@ -1232,6 +1232,9 @@ mappingproxy_traverse(PyObject *self, visitproc visit, void *arg)
 static PyObject *
 mappingproxy_richcompare(PyObject *self, PyObject *w, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     mappingproxyobject *v = (mappingproxyobject *)self;
     if (op == Py_EQ || op == Py_NE) {
         return PyObject_RichCompare(v->mapping, w, op);
@@ -1322,6 +1325,9 @@ wrapper_dealloc(PyObject *self)
 static PyObject *
 wrapper_richcompare(PyObject *a, PyObject *b, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     wrapperobject *wa, *wb;
     int eq;
 

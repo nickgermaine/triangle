@@ -271,6 +271,9 @@ method_dealloc(PyObject *self)
 static PyObject *
 method_richcompare(PyObject *self, PyObject *other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyMethodObject *a, *b;
     PyObject *res;
     int eq;
@@ -490,6 +493,9 @@ instancemethod_descr_get(PyObject *descr, PyObject *obj, PyObject *type) {
 static PyObject *
 instancemethod_richcompare(PyObject *self, PyObject *other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyInstanceMethodObject *a, *b;
     PyObject *res;
     int eq;

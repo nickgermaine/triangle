@@ -2788,7 +2788,7 @@ dummy_func(
             PyObject *left_o = PyStackRef_AsPyObjectBorrow(left);
             PyObject *right_o = PyStackRef_AsPyObjectBorrow(right);
 
-            assert((oparg >> 5) <= Py_GE);
+            assert((oparg >> 5) <= Py_Kinda);
             PyObject *res_o = PyObject_RichCompare(left_o, right_o, oparg >> 5);
             DECREF_INPUTS();
             ERROR_IF(res_o == NULL);
@@ -3055,6 +3055,21 @@ dummy_func(
                 DISPATCH_SAME_OPARG();
             }
         #endif
+        }
+
+        inst(REGISTER_WHEN, (condition, body -- )) {
+            PyObject *cond_o = PyStackRef_AsPyObjectBorrow(condition);
+            PyObject *body_o = PyStackRef_AsPyObjectBorrow(body);
+
+            int err = _PyEval_AddReactiveObserver(tstate, cond_o, body_o);
+
+            DECREF_INPUTS();
+
+            if (err < 0) {
+                goto error;
+            }
+
+            _Py_set_eval_breaker_bit(tstate, _PY_CALLS_TO_DO_BIT);
         }
 
         tier1 op(_JIT, (--)) {

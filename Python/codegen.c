@@ -103,6 +103,7 @@ static const int compare_masks[] = {
     [Py_NE] = COMPARISON_NOT_EQUALS,
     [Py_GT] = COMPARISON_GREATER_THAN,
     [Py_GE] = COMPARISON_GREATER_THAN | COMPARISON_EQUALS,
+    [Py_Kinda] = COMPARISON_LESS_THAN | COMPARISON_EQUALS | COMPARISON_GREATER_THAN,
 };
 
 
@@ -1901,6 +1902,9 @@ codegen_addcompare(compiler *c, location loc, cmpop_ty op)
     case GtE:
         cmp = Py_GE;
         break;
+    case Kinda:
+        cmp = Py_Kinda;
+        break;
     case Is:
         ADDOP_I(c, loc, IS_OP, 0);
         return SUCCESS;
@@ -2227,6 +2231,62 @@ codegen_while(compiler *c, stmt_ty s)
     }
 
     USE_LABEL(c, end);
+    return SUCCESS;
+}
+
+static int
+codegen_when(compiler *c, stmt_ty s)
+{
+    location loc = LOC(s);
+
+    PyObject *test_name = PyUnicode_FromString("<when_test>");
+    if (test_name == NULL) return ERROR;
+
+    if (codegen_enter_scope(c, test_name, COMPILE_SCOPE_LAMBDA, (void *)s->v.When.test, s->lineno, NULL, NULL) < 0) {
+        Py_DECREF(test_name);
+        return ERROR;
+    }
+
+    VISIT(c, expr, s->v.When.test);
+
+    if (_PyCodegen_AddReturnAtEnd(c, 0) < 0) {
+        _PyCompile_ExitScope(c);
+        Py_DECREF(test_name);
+        return ERROR;
+    }
+
+    PyCodeObject *co_test = _PyCompile_OptimizeAndAssemble(c, 0);
+    _PyCompile_ExitScope(c);
+    Py_DECREF(test_name);
+    if (co_test == NULL) return ERROR;
+
+    PyObject *body_name = PyUnicode_FromString("<when_body>");
+    if (body_name == NULL) { Py_DECREF(co_test); return ERROR; }
+
+    if (codegen_enter_scope(c, body_name, COMPILE_SCOPE_LAMBDA, (void *)s->v.When.body, s->lineno, NULL, NULL) < 0) {
+        Py_DECREF(body_name); Py_DECREF(co_test);
+        return ERROR;
+    }
+
+    VISIT_SEQ(c, stmt, s->v.When.body);
+
+    if (_PyCodegen_AddReturnAtEnd(c, 1) < 0) {
+        _PyCompile_ExitScope(c);
+        Py_DECREF(body_name); Py_DECREF(co_test);
+        return ERROR;
+    }
+
+    PyCodeObject *co_body = _PyCompile_OptimizeAndAssemble(c, 1);
+    _PyCompile_ExitScope(c);
+    Py_DECREF(body_name);
+    if (co_body == NULL) { Py_DECREF(co_test); return ERROR; }
+
+    ADDOP_LOAD_CONST(c, loc, (PyObject *)co_test);
+    ADDOP_LOAD_CONST(c, loc, (PyObject *)co_body);
+    ADDOP(c, loc, REGISTER_WHEN);
+
+    Py_DECREF(co_test);
+    Py_DECREF(co_body);
     return SUCCESS;
 }
 
@@ -3109,6 +3169,11 @@ codegen_visit_stmt(compiler *c, stmt_ty s)
         break;
     case If_kind:
         CODEGEN_COND_BLOCK(codegen_if, c, s);
+        break;
+    case When_kind:
+        if (codegen_when(c, s) < 0) {
+            return ERROR;
+        }
         break;
     case Match_kind:
         CODEGEN_COND_BLOCK(codegen_match, c, s);

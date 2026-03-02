@@ -370,6 +370,9 @@ float_repr(PyObject *op)
 static PyObject*
 float_richcompare(PyObject *v, PyObject *w, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     double i, j;
     int r = 0;
 

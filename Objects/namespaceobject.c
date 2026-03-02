@@ -194,6 +194,9 @@ namespace_clear(PyObject *op)
 static PyObject *
 namespace_richcompare(PyObject *self, PyObject *other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     if (
         (op == Py_EQ || op == Py_NE) &&
         PyObject_TypeCheck(self, &_PyNamespace_Type) &&

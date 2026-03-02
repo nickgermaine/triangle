@@ -22,7 +22,7 @@ for m in (opmap, _specialized_opmap):
     for op, i in m.items():
         opname[i] = op
 
-cmp_op = ('<', '<=', '==', '!=', '>', '>=')
+cmp_op = ('<', '<=', '==', '!=', '>', '>=', 'is kinda')
 
 # These lists are documented as part of the dis module's API
 hasarg = [op for op in opmap.values() if _opcode.has_arg(op)]

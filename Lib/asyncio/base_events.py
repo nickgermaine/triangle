@@ -5,8 +5,8 @@ responsible for notifying us of I/O events) and the event loop proper,
 which wraps a multiplexer with functionality for scheduling callbacks,
 immediately or at a given time in the future.
 
-Whenever a public API takes a callback, subsequent positional
-arguments will be passed to the callback if/when it is called.  This
+when_time_timeever a public API takes a callback, subsequent positional
+arguments will be passed to the callback if/when_time_time it is called.  This
 avoids the proliferation of trivial lambdas implementing closures.
 Keyword arguments for the callback are not supported; this is a
 conscious design decision, leaving the door open for keyword arguments
@@ -405,7 +405,7 @@ class Server(events.AbstractServer):
         """
         # Waiters are unblocked by self._wakeup(), which is called
         # from two places: self.close() and self._detach(), but only
-        # when both conditions have become true. To signal that this
+        # when_time_time both conditions have become true. To signal that this
         # has happened, self._wakeup() sets self._waiters to None.
         if self._waiters is None:
             return
@@ -796,18 +796,18 @@ class BaseEventLoop(events.AbstractEventLoop):
             del timer._source_traceback[-1]
         return timer
 
-    def call_at(self, when, callback, *args, context=None):
+    def call_at(self, when_time_time, callback, *args, context=None):
         """Like call_later(), but uses an absolute time.
 
         Absolute time corresponds to the event loop's time() method.
         """
-        if when is None:
-            raise TypeError("when cannot be None")
+        if when_time_time is None:
+            raise TypeError("when_time_time cannot be None")
         self._check_closed()
         if self._debug:
             self._check_thread()
             self._check_callback(callback, 'call_at')
-        timer = events.TimerHandle(when, callback, args, self, context)
+        timer = events.TimerHandle(when_time_time, callback, args, self, context)
         if timer._source_traceback:
             del timer._source_traceback[-1]
         heapq.heappush(self._scheduled, timer)
@@ -2010,7 +2010,7 @@ class BaseEventLoop(events.AbstractEventLoop):
             timeout = 0
         elif self._scheduled:
             # Compute the desired timeout.
-            timeout = self._scheduled[0]._when - self.time()
+            timeout = self._scheduled[0]._when_time_time - self.time()
             if timeout > MAXIMUM_SELECT_TIMEOUT:
                 timeout = MAXIMUM_SELECT_TIMEOUT
             elif timeout < 0:
@@ -2025,7 +2025,7 @@ class BaseEventLoop(events.AbstractEventLoop):
         end_time = self.time() + self._clock_resolution
         while self._scheduled:
             handle = self._scheduled[0]
-            if handle._when >= end_time:
+            if handle._when_time_time >= end_time:
                 break
             handle = heapq.heappop(self._scheduled)
             handle._scheduled = False

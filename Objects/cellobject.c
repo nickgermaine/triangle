@@ -85,6 +85,9 @@ cell_dealloc(PyObject *self)
 static PyObject *
 cell_compare_impl(PyObject *a, PyObject *b, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     if (a != NULL && b != NULL) {
         return PyObject_RichCompare(a, b, op);
     }

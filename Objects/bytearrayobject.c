@@ -1151,6 +1151,9 @@ bytearray_str(PyObject *op)
 static PyObject *
 bytearray_richcompare(PyObject *self, PyObject *other, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     Py_ssize_t self_size, other_size;
     Py_buffer self_bytes, other_bytes;
     int cmp;

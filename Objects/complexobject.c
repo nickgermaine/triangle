@@ -815,6 +815,9 @@ complex_bool(PyObject *op)
 static PyObject *
 complex_richcompare(PyObject *v, PyObject *w, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyObject *res;
     Py_complex i;
     int equal;

@@ -3415,6 +3415,9 @@ list_traverse(PyObject *self, visitproc visit, void *arg)
 static PyObject *
 list_richcompare_impl(PyObject *v, PyObject *w, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyListObject *vl, *wl;
     Py_ssize_t i;
 

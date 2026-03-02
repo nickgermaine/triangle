@@ -1655,6 +1655,9 @@ bytes_compare_eq(PyBytesObject *a, PyBytesObject *b)
 static PyObject*
 bytes_richcompare(PyObject *aa, PyObject *bb, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     /* Make sure both arguments are strings. */
     if (!(PyBytes_Check(aa) && PyBytes_Check(bb))) {
         if (_Py_GetConfig()->bytes_warning && (op == Py_EQ || op == Py_NE)) {

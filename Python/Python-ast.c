@@ -100,6 +100,8 @@ void _PyAST_Fini(PyInterpreterState *interp)
     Py_CLEAR(state->Is_singleton);
     Py_CLEAR(state->Is_type);
     Py_CLEAR(state->JoinedStr_type);
+    Py_CLEAR(state->Kinda_singleton);
+    Py_CLEAR(state->Kinda_type);
     Py_CLEAR(state->LShift_singleton);
     Py_CLEAR(state->LShift_type);
     Py_CLEAR(state->Lambda_type);
@@ -168,6 +170,7 @@ void _PyAST_Fini(PyInterpreterState *interp)
     Py_CLEAR(state->USub_singleton);
     Py_CLEAR(state->USub_type);
     Py_CLEAR(state->UnaryOp_type);
+    Py_CLEAR(state->When_type);
     Py_CLEAR(state->While_type);
     Py_CLEAR(state->With_type);
     Py_CLEAR(state->YieldFrom_type);
@@ -223,6 +226,7 @@ void _PyAST_Fini(PyInterpreterState *interp)
     Py_CLEAR(state->ifs);
     Py_CLEAR(state->is_async);
     Py_CLEAR(state->is_lazy);
+    Py_CLEAR(state->is_persistent);
     Py_CLEAR(state->items);
     Py_CLEAR(state->iter);
     Py_CLEAR(state->key);
@@ -329,6 +333,7 @@ static int init_identifiers(struct ast_state *state)
     if ((state->ifs = PyUnicode_InternFromString("ifs")) == NULL) return -1;
     if ((state->is_async = PyUnicode_InternFromString("is_async")) == NULL) return -1;
     if ((state->is_lazy = PyUnicode_InternFromString("is_lazy")) == NULL) return -1;
+    if ((state->is_persistent = PyUnicode_InternFromString("is_persistent")) == NULL) return -1;
     if ((state->items = PyUnicode_InternFromString("items")) == NULL) return -1;
     if ((state->iter = PyUnicode_InternFromString("iter")) == NULL) return -1;
     if ((state->key = PyUnicode_InternFromString("key")) == NULL) return -1;
@@ -487,6 +492,11 @@ static const char * const While_fields[]={
     "test",
     "body",
     "orelse",
+};
+static const char * const When_fields[]={
+    "test",
+    "body",
+    "is_persistent",
 };
 static const char * const If_fields[]={
     "test",
@@ -1788,6 +1798,57 @@ add_ast_annotations(struct ast_state *state)
         return 0;
     }
     Py_DECREF(While_annotations);
+    PyObject *When_annotations = PyDict_New();
+    if (!When_annotations) return 0;
+    {
+        PyObject *type = state->expr_type;
+        Py_INCREF(type);
+        cond = PyDict_SetItemString(When_annotations, "test", type) == 0;
+        Py_DECREF(type);
+        if (!cond) {
+            Py_DECREF(When_annotations);
+            return 0;
+        }
+    }
+    {
+        PyObject *type = state->stmt_type;
+        type = Py_GenericAlias((PyObject *)&PyList_Type, type);
+        cond = type != NULL;
+        if (!cond) {
+            Py_DECREF(When_annotations);
+            return 0;
+        }
+        cond = PyDict_SetItemString(When_annotations, "body", type) == 0;
+        Py_DECREF(type);
+        if (!cond) {
+            Py_DECREF(When_annotations);
+            return 0;
+        }
+    }
+    {
+        PyObject *type = (PyObject *)&PyLong_Type;
+        Py_INCREF(type);
+        cond = PyDict_SetItemString(When_annotations, "is_persistent", type) ==
+                                    0;
+        Py_DECREF(type);
+        if (!cond) {
+            Py_DECREF(When_annotations);
+            return 0;
+        }
+    }
+    cond = PyObject_SetAttrString(state->When_type, "_field_types",
+                                  When_annotations) == 0;
+    if (!cond) {
+        Py_DECREF(When_annotations);
+        return 0;
+    }
+    cond = PyObject_SetAttrString(state->When_type, "__annotations__",
+                                  When_annotations) == 0;
+    if (!cond) {
+        Py_DECREF(When_annotations);
+        return 0;
+    }
+    Py_DECREF(When_annotations);
     PyObject *If_annotations = PyDict_New();
     if (!If_annotations) return 0;
     {
@@ -4172,6 +4233,21 @@ add_ast_annotations(struct ast_state *state)
         return 0;
     }
     Py_DECREF(NotIn_annotations);
+    PyObject *Kinda_annotations = PyDict_New();
+    if (!Kinda_annotations) return 0;
+    cond = PyObject_SetAttrString(state->Kinda_type, "_field_types",
+                                  Kinda_annotations) == 0;
+    if (!cond) {
+        Py_DECREF(Kinda_annotations);
+        return 0;
+    }
+    cond = PyObject_SetAttrString(state->Kinda_type, "__annotations__",
+                                  Kinda_annotations) == 0;
+    if (!cond) {
+        Py_DECREF(Kinda_annotations);
+        return 0;
+    }
+    Py_DECREF(Kinda_annotations);
     PyObject *comprehension_annotations = PyDict_New();
     if (!comprehension_annotations) return 0;
     {
@@ -6250,6 +6326,7 @@ init_types(void *arg)
         "     | For(expr target, expr iter, stmt* body, stmt* orelse, string? type_comment)\n"
         "     | AsyncFor(expr target, expr iter, stmt* body, stmt* orelse, string? type_comment)\n"
         "     | While(expr test, stmt* body, stmt* orelse)\n"
+        "     | When(expr test, stmt* body, int is_persistent)\n"
         "     | If(expr test, stmt* body, stmt* orelse)\n"
         "     | With(withitem* items, stmt* body, string? type_comment)\n"
         "     | AsyncWith(withitem* items, stmt* body, string? type_comment)\n"
@@ -6346,6 +6423,10 @@ init_types(void *arg)
                                   While_fields, 3,
         "While(expr test, stmt* body, stmt* orelse)");
     if (!state->While_type) return -1;
+    state->When_type = make_type(state, "When", state->stmt_type, When_fields,
+                                 3,
+        "When(expr test, stmt* body, int is_persistent)");
+    if (!state->When_type) return -1;
     state->If_type = make_type(state, "If", state->stmt_type, If_fields, 3,
         "If(expr test, stmt* body, stmt* orelse)");
     if (!state->If_type) return -1;
@@ -6766,7 +6847,7 @@ init_types(void *arg)
                                               NULL, NULL);
     if (!state->USub_singleton) return -1;
     state->cmpop_type = make_type(state, "cmpop", state->AST_type, NULL, 0,
-        "cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn");
+        "cmpop = Eq | NotEq | Lt | LtE | Gt | GtE | Is | IsNot | In | NotIn | Kinda");
     if (!state->cmpop_type) return -1;
     if (add_attributes(state, state->cmpop_type, NULL, 0) < 0) return -1;
     state->Eq_type = make_type(state, "Eq", state->cmpop_type, NULL, 0,
@@ -6829,6 +6910,12 @@ init_types(void *arg)
     state->NotIn_singleton = PyType_GenericNew((PyTypeObject
                                                *)state->NotIn_type, NULL, NULL);
     if (!state->NotIn_singleton) return -1;
+    state->Kinda_type = make_type(state, "Kinda", state->cmpop_type, NULL, 0,
+        "Kinda");
+    if (!state->Kinda_type) return -1;
+    state->Kinda_singleton = PyType_GenericNew((PyTypeObject
+                                               *)state->Kinda_type, NULL, NULL);
+    if (!state->Kinda_singleton) return -1;
     state->comprehension_type = make_type(state, "comprehension",
                                           state->AST_type,
                                           comprehension_fields, 4,
@@ -7464,6 +7551,30 @@ _PyAST_While(expr_ty test, asdl_stmt_seq * body, asdl_stmt_seq * orelse, int
     p->v.While.test = test;
     p->v.While.body = body;
     p->v.While.orelse = orelse;
+    p->lineno = lineno;
+    p->col_offset = col_offset;
+    p->end_lineno = end_lineno;
+    p->end_col_offset = end_col_offset;
+    return p;
+}
+
+stmt_ty
+_PyAST_When(expr_ty test, asdl_stmt_seq * body, int is_persistent, int lineno,
+            int col_offset, int end_lineno, int end_col_offset, PyArena *arena)
+{
+    stmt_ty p;
+    if (!test) {
+        PyErr_SetString(PyExc_ValueError,
+                        "field 'test' is required for When");
+        return NULL;
+    }
+    p = (stmt_ty)_PyArena_Malloc(arena, sizeof(*p));
+    if (!p)
+        return NULL;
+    p->kind = When_kind;
+    p->v.When.test = test;
+    p->v.When.body = body;
+    p->v.When.is_persistent = is_persistent;
     p->lineno = lineno;
     p->col_offset = col_offset;
     p->end_lineno = end_lineno;
@@ -9334,6 +9445,26 @@ ast2obj_stmt(struct ast_state *state, void* _o)
             goto failed;
         Py_DECREF(value);
         break;
+    case When_kind:
+        tp = (PyTypeObject *)state->When_type;
+        result = PyType_GenericNew(tp, NULL, NULL);
+        if (!result) goto failed;
+        value = ast2obj_expr(state, o->v.When.test);
+        if (!value) goto failed;
+        if (PyObject_SetAttr(result, state->test, value) == -1)
+            goto failed;
+        Py_DECREF(value);
+        value = ast2obj_list(state, (asdl_seq*)o->v.When.body, ast2obj_stmt);
+        if (!value) goto failed;
+        if (PyObject_SetAttr(result, state->body, value) == -1)
+            goto failed;
+        Py_DECREF(value);
+        value = ast2obj_int(state, o->v.When.is_persistent);
+        if (!value) goto failed;
+        if (PyObject_SetAttr(result, state->is_persistent, value) == -1)
+            goto failed;
+        Py_DECREF(value);
+        break;
     case If_kind:
         tp = (PyTypeObject *)state->If_type;
         result = PyType_GenericNew(tp, NULL, NULL);
@@ -10226,6 +10357,8 @@ PyObject* ast2obj_cmpop(struct ast_state *state, cmpop_ty o)
             return Py_NewRef(state->In_singleton);
         case NotIn:
             return Py_NewRef(state->NotIn_singleton);
+        case Kinda:
+            return Py_NewRef(state->Kinda_singleton);
     }
     Py_UNREACHABLE();
 }
@@ -12699,6 +12832,93 @@ obj2ast_stmt(struct ast_state *state, PyObject* obj, stmt_ty* out, PyArena*
         }
         *out = _PyAST_While(test, body, orelse, lineno, col_offset, end_lineno,
                             end_col_offset, arena);
+        if (*out == NULL) goto failed;
+        return 0;
+    }
+    tp = state->When_type;
+    isinstance = PyObject_IsInstance(obj, tp);
+    if (isinstance == -1) {
+        return -1;
+    }
+    if (isinstance) {
+        expr_ty test;
+        asdl_stmt_seq* body;
+        int is_persistent;
+
+        if (PyObject_GetOptionalAttr(obj, state->test, &tmp) < 0) {
+            return -1;
+        }
+        if (tmp == NULL) {
+            PyErr_SetString(PyExc_TypeError, "required field \"test\" missing from When");
+            return -1;
+        }
+        else {
+            int res;
+            if (_Py_EnterRecursiveCall(" while traversing 'When' node")) {
+                goto failed;
+            }
+            res = obj2ast_expr(state, tmp, &test, arena);
+            _Py_LeaveRecursiveCall();
+            if (res != 0) goto failed;
+            Py_CLEAR(tmp);
+        }
+        if (PyObject_GetOptionalAttr(obj, state->body, &tmp) < 0) {
+            return -1;
+        }
+        if (tmp == NULL) {
+            tmp = PyList_New(0);
+            if (tmp == NULL) {
+                return -1;
+            }
+        }
+        {
+            int res;
+            Py_ssize_t len;
+            Py_ssize_t i;
+            if (!PyList_Check(tmp)) {
+                PyErr_Format(PyExc_TypeError, "When field \"body\" must be a list, not a %.200s", _PyType_Name(Py_TYPE(tmp)));
+                goto failed;
+            }
+            len = PyList_GET_SIZE(tmp);
+            body = _Py_asdl_stmt_seq_new(len, arena);
+            if (body == NULL) goto failed;
+            for (i = 0; i < len; i++) {
+                stmt_ty val;
+                PyObject *tmp2 = Py_NewRef(PyList_GET_ITEM(tmp, i));
+                if (_Py_EnterRecursiveCall(" while traversing 'When' node")) {
+                    goto failed;
+                }
+                res = obj2ast_stmt(state, tmp2, &val, arena);
+                _Py_LeaveRecursiveCall();
+                Py_DECREF(tmp2);
+                if (res != 0) goto failed;
+                if (len != PyList_GET_SIZE(tmp)) {
+                    PyErr_SetString(PyExc_RuntimeError, "When field \"body\" changed size during iteration");
+                    goto failed;
+                }
+                asdl_seq_SET(body, i, val);
+            }
+            Py_CLEAR(tmp);
+        }
+        if (PyObject_GetOptionalAttr(obj, state->is_persistent, &tmp) < 0) {
+            return -1;
+        }
+        if (tmp == NULL) {
+            PyErr_SetString(PyExc_TypeError, "required field \"is_persistent\" missing from When");
+            return -1;
+        }
+        else {
+            int res;
+            if (_Py_EnterRecursiveCall(" while traversing 'When' node")) {
+                goto failed;
+            }
+            res = obj2ast_int(state, tmp, &is_persistent, arena);
+            _Py_LeaveRecursiveCall();
+            if (res != 0) goto failed;
+            Py_CLEAR(tmp);
+        }
+        *out = _PyAST_When(test, body, is_persistent, lineno, col_offset,
+                           end_lineno, end_col_offset, arena);
         if (*out == NULL) goto failed;
         return 0;
     }
@@ -16094,6 +16314,14 @@ obj2ast_cmpop(struct ast_state *state, PyObject* obj, cmpop_ty* out, PyArena*
         *out = NotIn;
         return 0;
     }
+    isinstance = PyObject_IsInstance(obj, state->Kinda_type);
+    if (isinstance == -1) {
+        return -1;
+    }
+    if (isinstance) {
+        *out = Kinda;
+        return 0;
+    }
 
     PyErr_Format(PyExc_TypeError, "expected some sort of cmpop, but got %R", obj);
     return -1;
@@ -18144,6 +18372,9 @@ astmodule_exec(PyObject *m)
     if (PyModule_AddObjectRef(m, "While", state->While_type) < 0) {
         return -1;
     }
+    if (PyModule_AddObjectRef(m, "When", state->When_type) < 0) {
+        return -1;
+    }
     if (PyModule_AddObjectRef(m, "If", state->If_type) < 0) {
         return -1;
     }
@@ -18395,6 +18626,9 @@ astmodule_exec(PyObject *m)
         return -1;
     }
     if (PyModule_AddObjectRef(m, "NotIn", state->NotIn_type) < 0) {
+        return -1;
+    }
+    if (PyModule_AddObjectRef(m, "Kinda", state->Kinda_type) < 0) {
         return -1;
     }
     if (PyModule_AddObjectRef(m, "comprehension", state->comprehension_type) <

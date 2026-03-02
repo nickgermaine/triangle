@@ -83,6 +83,8 @@ struct ast_state {
     PyObject *Is_singleton;
     PyObject *Is_type;
     PyObject *JoinedStr_type;
+    PyObject *Kinda_singleton;
+    PyObject *Kinda_type;
     PyObject *LShift_singleton;
     PyObject *LShift_type;
     PyObject *Lambda_type;
@@ -151,6 +153,7 @@ struct ast_state {
     PyObject *USub_singleton;
     PyObject *USub_type;
     PyObject *UnaryOp_type;
+    PyObject *When_type;
     PyObject *While_type;
     PyObject *With_type;
     PyObject *YieldFrom_type;
@@ -206,6 +209,7 @@ struct ast_state {
     PyObject *ifs;
     PyObject *is_async;
     PyObject *is_lazy;
+    PyObject *is_persistent;
     PyObject *items;
     PyObject *iter;
     PyObject *key;

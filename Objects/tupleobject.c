@@ -659,6 +659,9 @@ tuple_traverse(PyObject *self, visitproc visit, void *arg)
 static PyObject *
 tuple_richcompare(PyObject *v, PyObject *w, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyTupleObject *vt, *wt;
     Py_ssize_t i;
     Py_ssize_t vlen, wlen;

@@ -482,6 +482,9 @@ framelocalsproxy_iter(PyObject *self)
 static PyObject *
 framelocalsproxy_richcompare(PyObject *lhs, PyObject *rhs, int op)
 {
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
     PyFrameLocalsProxyObject *self = PyFrameLocalsProxyObject_CAST(lhs);
     if (PyFrameLocalsProxy_Check(rhs)) {
         PyFrameLocalsProxyObject *other = (PyFrameLocalsProxyObject *)rhs;

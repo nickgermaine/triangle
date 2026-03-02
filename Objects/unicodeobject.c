@@ -11198,6 +11198,9 @@ PyObject *
 PyUnicode_RichCompare(PyObject *left, PyObject *right, int op)
 {
     int result;
+    if (op == Py_Kinda) {
+        Py_RETURN_NOTIMPLEMENTED;
+    }
 
     if (!PyUnicode_Check(left) || !PyUnicode_Check(right))
         Py_RETURN_NOTIMPLEMENTED;

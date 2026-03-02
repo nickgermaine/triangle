@@ -127,8 +127,13 @@ compile_and_marshal(const char *name, const char *text)
         return PyErr_NoMemory();
     }
     sprintf(filename, "<frozen %s>", name);
+
+    PyCompilerFlags flags;
+    flags.cf_flags = 0;
+    flags.cf_feature_version = 15;
+
     PyObject *code = Py_CompileStringExFlags(text, filename,
-                                             Py_file_input, NULL, 0);
+                                             Py_file_input, &flags, 0);
     free(filename);
     if (code == NULL) {
         return NULL;

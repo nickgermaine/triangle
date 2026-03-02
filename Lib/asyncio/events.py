@@ -141,47 +141,47 @@ class _ThreadSafeHandle(Handle):
 class TimerHandle(Handle):
     """Object returned by timed callback registration methods."""
 
-    __slots__ = ['_scheduled', '_when']
+    __slots__ = ['_scheduled', '_when_time_time']
 
-    def __init__(self, when, callback, args, loop, context=None):
+    def __init__(self, when_time_time, callback, args, loop, context=None):
         super().__init__(callback, args, loop, context)
         if self._source_traceback:
             del self._source_traceback[-1]
-        self._when = when
+        self._when_time_time = when_time_time
         self._scheduled = False
 
     def _repr_info(self):
         info = super()._repr_info()
         pos = 2 if self._cancelled else 1
-        info.insert(pos, f'when={self._when}')
+        info.insert(pos, f'when_time_time={self._when_time_time}')
         return info
 
     def __hash__(self):
-        return hash(self._when)
+        return hash(self._when_time_time)
 
     def __lt__(self, other):
         if isinstance(other, TimerHandle):
-            return self._when < other._when
+            return self._when_time_time < other._when_time_time
         return NotImplemented
 
     def __le__(self, other):
         if isinstance(other, TimerHandle):
-            return self._when < other._when or self.__eq__(other)
+            return self._when_time_time < other._when_time_time or self.__eq__(other)
         return NotImplemented
 
     def __gt__(self, other):
         if isinstance(other, TimerHandle):
-            return self._when > other._when
+            return self._when_time_time > other._when_time_time
         return NotImplemented
 
     def __ge__(self, other):
         if isinstance(other, TimerHandle):
-            return self._when > other._when or self.__eq__(other)
+            return self._when_time_time > other._when_time_time or self.__eq__(other)
         return NotImplemented
 
     def __eq__(self, other):
         if isinstance(other, TimerHandle):
-            return (self._when == other._when and
+            return (self._when_time_time == other._when_time_time and
                     self._callback == other._callback and
                     self._args == other._args and
                     self._cancelled == other._cancelled)
@@ -192,13 +192,13 @@ class TimerHandle(Handle):
             self._loop._timer_handle_cancelled(self)
         super().cancel()
 
-    def when(self):
+    def when_time_time(self):
         """Return a scheduled callback time.
 
         The time is an absolute timestamp, using the same time
         reference as loop.time().
         """
-        return self._when
+        return self._when_time_time
 
 
 class AbstractServer:
@@ -314,7 +314,7 @@ class AbstractEventLoop:
     def call_later(self, delay, callback, *args, context=None):
         raise NotImplementedError
 
-    def call_at(self, when, callback, *args, context=None):
+    def call_at(self, when_time_time, callback, *args, context=None):
         raise NotImplementedError
 
     def time(self):
