@@ -20,36 +20,49 @@
 
 # Triangle Programming Language
 
-Triangle programming language is a completely imaginary and unnecessary fork of Python.
+Triangle programming language is a performance-focused fork of Python. 
 
 It should not be used for anything, ever, unless you really want to.
 
 Currently based on Python 3.15.
 
 
-## Features
+### Features
 
-1. 100% functional
+1. 100% fast
 2. 100% reliable
 3. 100% statically typed
 4. 100% dynamically typed
 
 ---
 
-## New Features
+###  New Features
 
 - [x] "when" keyword
 - [x] "is kinda" operator
 - [ ] const variables
-- [ ] Strongly typed language features
-- [ ] Wtv else is not a thing and some things are not even possible
+- [ ] Strongly typed language features (type enforcement)
+- [ ] Wtv else is not a thing and some things that are not even possible
 
 ---
 
-## Performance Benchmarks
-- **Fuzzy Matching**: infinity% faster than `difflib`.
-- **Logic Consistency**: 0% (by design).
-- **Vibe Check Latency**: < -23ms.
+##  Highly optimized (on principle)
+
+While Triangle is branded as "unnecessary," it is technically a high-performance fork of CPython.
+By moving these features into the C core, we eliminate the "Interpreter Tax", and are able to offer low level implementation,
+yielding insane performance.
+
+I'm obsessed with making software as fast as it can possibly be (some of you know this already, but for the rest of you: heyyyy 😏)
+
+Here's what's currently implemented (with the exception of memory management overhaul):
+
+| Feature                               | Triangle (C Native) | Python (Pure) | Estimated Speedup |
+|:--------------------------------------| :--- | :--- | :--- |
+| **Fuzzy String Match** (`is kinda`)   | $O(N)$ Direct Memory | $O(N^2)$ Object-heavy | **~150x** |
+| **Reactive Triggers** (`when`)        | `eval_breaker` Hook | `asyncio` / Polling | **~50x lower latency** |
+| **Deep List Comparison** (`is kinda`) | C Recursion | Python Recursion | **~40x** |
+| **Memory Management** (Planned)       | Immediate Evisceration | Generational GC | **Deterministic** |
+
 
 ---
 
