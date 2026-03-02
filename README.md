@@ -8,7 +8,7 @@
 
 ![GitHub stars](https://img.shields.io/github/stars/nickgermaine/triangle?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/nickgermaine/triangle?style=social)
-![GitHub watchers](https://img.shields.io/github/watchers/nickgermaine/oqu?style=social)
+![GitHub watchers](https://img.shields.io/github/watchers/nickgermaine/triangle?style=social)
 
 ![version](https://img.shields.io/badge/version-3.15.0-blue)
 ![GitHub repo size](https://img.shields.io/github/repo-size/nickgermaine/triangle)
