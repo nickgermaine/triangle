@@ -1,10 +1,16 @@
 <div style="text-align: center; margin-top: 40px">
+<p align="center">
 <img src="./Assets/triangle.png" alt="alt text" width="140"/>
-<h1 style="margin-bottom: 0px; margin-top: 0px">Triangle</h1>
-<h3 style="margin-top: 0px">A completely unnecessary programming language</h3>
+<h3 style="margin-bottom: 0px; margin-top: 0px" border="0">
+    <p align="center" border="0">Triangle</p>
+</h3>
+<h4 style="margin-top: 0px">
+    <p align="center">A completely unnecessary programming language</p>
+</h4>
 </div>
 
----
+<br>
+<br>
 
 ![GitHub stars](https://img.shields.io/github/stars/nickgermaine/triangle?style=social)
 ![GitHub forks](https://img.shields.io/github/forks/nickgermaine/triangle?style=social)
@@ -16,16 +22,19 @@
 ![GitHub top language](https://img.shields.io/github/languages/top/nickgermaine/triangle)
 ![GitHub last commit](https://img.shields.io/github/last-commit/nickgermaine/triangle?color=green)
 
-
+<br>
 
 # Triangle Programming Language
 
-Triangle programming language is a performance-focused fork of Python. 
+<br>
+
+Triangle programming language is a performance-focused fork of Python.
 
 It should not be used for anything, ever, unless you really want to.
 
 Currently based on Python 3.15.
 
+<br>
 
 ### Features
 
@@ -34,7 +43,7 @@ Currently based on Python 3.15.
 3. 100% statically typed
 4. 100% dynamically typed
 
----
+<br>
 
 ###  New Features
 
@@ -44,9 +53,11 @@ Currently based on Python 3.15.
 - [ ] Strongly typed language features (type enforcement)
 - [ ] Wtv else is not a thing and some things that are not even possible
 
----
+<br>
 
 ##  Highly optimized (on principle)
+
+<br>
 
 While Triangle is branded as "unnecessary," it is technically a high-performance fork of CPython.
 By moving these features into the C core, we eliminate the "Interpreter Tax", and are able to offer low level implementation,
@@ -56,6 +67,9 @@ I'm obsessed with making software as fast as it can possibly be (some of you kno
 
 Here's what's currently implemented (with the exception of memory management overhaul):
 
+<br>
+
+
 | Feature                               | Triangle (C Native) | Python (Pure) | Estimated Speedup |
 |:--------------------------------------| :--- | :--- | :--- |
 | **Fuzzy String Match** (`is kinda`)   | $O(N)$ Direct Memory | $O(N^2)$ Object-heavy | **~150x** |
@@ -63,13 +77,15 @@ Here's what's currently implemented (with the exception of memory management ove
 | **Deep List Comparison** (`is kinda`) | C Recursion | Python Recursion | **~40x** |
 | **Memory Management** (Planned)       | Immediate Evisceration | Generational GC | **Deterministic** |
 
-
----
+<br>
 
 # Documentation
-### "when" keyword
 
-The "when" keyword is used to define a branch of code that will execute as soon as the condition
+<br>
+
+### `when` keyword
+
+The `when` keyword is used to define a branch of code that will execute as soon as the condition
 resolves to `True`.
 
 Example:
@@ -108,11 +124,11 @@ Application is ready.
 Executing logic and stuff.
 ```
 
----
+<br>
 
-### "is kinda" operator
+### `is kinda` operator
 
-The "is kinda" operator is used to check if two values are kinda the same.
+The `is kinda` operator is used to check if two values are kinda the same.
 
 Example:
 
